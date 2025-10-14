@@ -25,25 +25,26 @@ C --> C3[train_models.py]
 C --> C4[inference.py]
 C --> C5[utils.py]
 F --> F1[test_predictions_seg_cd_blend_46.8361.csv]
-'''
+```
 
 ## Environment Setup
-''' bash
+``` bash
 # clone repository
 git clone https://github.com/<your_username>/Amazon_ML_Challenge.git
 cd Amazon_ML_Challenge
-
+```
 # create environment
 python3 -m venv venv
 source venv/bin/activate     # Linux / macOS
 venv\Scripts\activate        # Windows
 
 # install dependencies
+``` bash
 pip install -r requirements.txt
-'''
+```
 
 ## Requirements
-''' bash
+``` bash
 python==3.10
 numpy>=1.26
 pandas>=2.0
@@ -55,7 +56,7 @@ sentence-transformers
 open_clip_torch
 matplotlib
 seaborn
-'''
+```
 ## Problem Description
 Input:
 
@@ -74,14 +75,14 @@ Predicted price value (float)
 Metric: SMAPE=(100/N)∗Σ(∣yp​red−yt​rue∣/((∣yp​red∣+∣yt​rue∣)/2))
 
 ## Data Flow
-'''mermaid
+```mermaid
 flowchart LR
     A[Raw CSV Files] --> B[Preprocessing]
     B --> C[Feature Engineering]
     C --> D[Model Training]
     D --> E[Meta Ensembling]
     E --> F[Final Predictions]
-'''
+```
 Pipeline Explanation
 1. Data Preprocessing
 
