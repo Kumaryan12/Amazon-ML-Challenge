@@ -1,0 +1,13 @@
+*.tar
+*.zip
+*.gz
+*.npy
+*.pt
+*.bin
+*.h5
+*.ckpt
+__pycache__/
+restore/
+checkpoints/
+e5-large-v2/
+*.ipynb_checkpoints/
