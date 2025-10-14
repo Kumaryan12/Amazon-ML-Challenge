@@ -1,50 +1,121 @@
 # Amazon_ML_Challenge_2025
 
 ## Overview
-This repository contains the full implementation of our solution for the **Amazon ML Challenge 2025**.  
-The problem involves predicting optimal product prices using a multimodal dataset consisting of text, images, and structured metadata.  
-The core metric is **SMAPE (Symmetric Mean Absolute Percentage Error)**.
+This repository contains the complete implementation for the **Amazon ML Challenge 2025**.  
+The project predicts product prices using multimodal information (text, image, and metadata).  
+All experiments, preprocessing, and model training have been executed inside the provided Jupyter notebooks.
 
 ---
 
 ## Repository Structure
-```mermaid
-graph TD
-A[Amazon_ML_Challenge] --> B[notebooks]
-A --> C[src]
-A --> D[data]
-A --> E[models]
-A --> F[outputs]
-A --> G[reports]
-A --> H[checkpoints]
-B --> B1[Notebook_Till_Checkpoint.ipynb]
-B --> B2[Notebook_Using_CheckPoint.ipynb]
-C --> C1[data_preprocessing.py]
-C --> C2[feature_engineering.py]
-C --> C3[train_models.py]
-C --> C4[inference.py]
-C --> C5[utils.py]
-F --> F1[test_predictions_seg_cd_blend_46.8361.csv]
+```bash
+AMAZON_ML_CHALLENGE/
+│
+├── .gitignore
+├── LICENSE
+├── README.md
+│
+├── Notebook_Till_Checkpoint.ipynb        # Full pipeline till checkpoint creation
+├── Notebook_From_CheckPoint.ipynb        # Resumed notebook using pre-saved checkpoint
+│
+├── checkpoint_bundle.tar.gz              # Contains saved model states, embeddings, and metadata
+│
+└── test_predictions_seg_cd_blend_46.8361.csv   # Final output predictions (SMAPE ~46.83%)
 ```
+## Project Description
+# Task
+Predict realistic selling prices for products listed on an e-commerce platform using multimodal data.
+The evaluation metric is SMAPE (Symmetric Mean Absolute Percentage Error).
 
-## Environment Setup
-``` bash
-# clone repository
-git clone https://github.com/<your_username>/Amazon_ML_Challenge.git
-cd Amazon_ML_Challenge
+# Input Data
+Each product includes:
+
+Title and Description (text)
+
+Product Category, Brand, and Segment (categorical)
+
+Image Links (visual input)
+
+Numerical metadata (ratings, discount, etc.)
+
+# Output
+Predicted numeric price for each test entry.
+
+Implementation Workflow
+All implementation steps are consolidated inside two Jupyter notebooks:
+
+1. Notebook_Till_Checkpoint.ipynb
+This notebook executes:
+
+Data preprocessing and cleaning
+
+Feature extraction:
+
+Text embeddings using e5-large-v2
+
+Image embeddings using OpenCLIP (ViT-L/14)
+
+Metadata encoding and normalization
+
+Base model training (LightGBM, XGBoost, Ridge, FAISS-based kNN)
+
+Checkpoint creation: trained models and embeddings saved to checkpoint_bundle.tar.gz
+
+2. Notebook_From_CheckPoint.ipynb
+This notebook resumes from the saved checkpoint and performs:
+
+Model restoration and validation
+
+Meta-model (residual booster + isotonic regression)
+
+Segment-wise blending and calibration
+
+Generation of final predictions → test_predictions_seg_cd_blend_46.8361.csv
+
+# Checkpoint Description
+The file checkpoint_bundle.tar.gz contains:
+
+``` pgsql
+Copy code
+/checkpoint/
+├── model_weights/          # XGBoost, LightGBM, Ridge, Meta-Model
+├── text_embeddings/        # TF-IDF + e5-large-v2 sentence embeddings
+├── image_embeddings/       # OpenCLIP ViT-L/14 features
+├── scaler_params/          # Feature normalizers and encoders
+└── metadata.pkl            # Dataset configuration and fold info
 ```
-# create environment
-python3 -m venv venv
-source venv/bin/activate     # Linux / macOS
-venv\Scripts\activate        # Windows
+To reuse:
 
-# install dependencies
-``` bash
-pip install -r requirements.txt
+```bash
+Copy code
+# extract
+tar -xvzf checkpoint_bundle.tar.gz
+# place extracted 'checkpoint/' directory at project root
 ```
+## Execution Instructions
+# Run Entire Pipeline from Start
+```bash
+Copy code
+jupyter notebook Notebook_Till_Checkpoint.ipynb
+```
+## Resume from Saved Checkpoint
+```bash
+Copy code
+jupyter notebook Notebook_From_CheckPoint.ipynb
+```
+All results (predictions, validation scores, and model summaries) are generated within the notebooks.
 
-## Requirements
-``` bash
+Results Summary
+Model Type	Description	SMAPE (CV)
+Text-only (TF-IDF + Ridge)	Text baseline	63.4%
+Multimodal LGBM	Text + Meta	49.5%
+Per-Segment XGB	Text + Image + Meta	48.5%
+Residual Superblend	Meta-ensemble	47.2%
+Seg-CD Blend (Final)	Calibrated final blend	46.83%
+
+Dependencies
+```bash
+Copy code
 python==3.10
 numpy>=1.26
 pandas>=2.0
@@ -57,87 +128,22 @@ open_clip_torch
 matplotlib
 seaborn
 ```
-## Problem Description
-Input:
+To install:
 
-title, description, and product_type (text features)
-
-image_link (image features)
-
-categorical features like brand, segment, etc.
-
-continuous features like rating, discount, etc.
-
-Output:
-
-Predicted price value (float)
-
-Metric: SMAPE=(100/N)∗Σ(∣yp​red−yt​rue∣/((∣yp​red∣+∣yt​rue∣)/2))
-
-## Data Flow
-```mermaid
-flowchart LR
-    A[Raw CSV Files] --> B[Preprocessing]
-    B --> C[Feature Engineering]
-    C --> D[Model Training]
-    D --> E[Meta Ensembling]
-    E --> F[Final Predictions]
+```bash
+Copy code
+pip install -r requirements.txt
 ```
-Pipeline Explanation
-1. Data Preprocessing
+Reproducibility Notes
+Random seeds fixed for all frameworks
 
-Handle missing values in text and image fields.
+Pretrained embeddings reused via checkpoint to save time
 
-Replace zero or invalid prices with median of segment.
+No external data used beyond the official challenge dataset
 
-Apply logarithmic transformation for price normalization.
+License
+This project is released under the MIT License (see LICENSE file).
 
-Stratified K-Fold based on log(price) bins.
-
-2. Feature Engineering
-
-Text: TF-IDF and Sentence Transformer (e5-large-v2)
-
-Image: OpenCLIP ViT-L/14 and ViT-B/32 embeddings
-
-Categorical: Frequency encoding for brand/segment
-
-Numerical: Z-score normalization
-
-Interactions: price × brand_freq, embedding_distance, etc.
-
-3. Modeling
-Model	Description
-Ridge Regression	Text-only TF-IDF baseline
-LightGBM	Structured + Text embedding model
-XGBoost	Feature-interaction learning
-FAISS kNN	Similarity-based image price priors
-Residual Booster	Meta-level model combining all base predictions
-
-Training was done using 5-fold stratified CV, optimizing directly on SMAPE.
-
-4. Ensembling
-
-OOF predictions from each model are stacked.
-
-A final meta-regressor (XGBoost) learns optimal blending weights.
-
-Segment-level isotonic regression applied for calibration.
-
-Segment and cluster-based final blending applied to improve consistency.
-
-## License
-This project is distributed under the MIT License.
-
-## Authors
+Author
 Aryan Kumar, NIT Goa
-
-## Acknowledgements
-
-Amazon ML Challenge 2025
-
-LAION / OpenCLIP team
-
-Sentence-Transformers (e5-large-v2)
-
-XGBoost & LightGBM open-source contributors
+Amazon ML Challenge 2025 — Multimodal Price Prediction Solution
